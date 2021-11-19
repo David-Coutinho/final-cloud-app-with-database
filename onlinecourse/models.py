@@ -12,9 +12,13 @@ import uuid
 
 # Instructor model
 class Instructor(models.Model):
-    user = models.ForeignKey(
+    # user = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.CASCADE,
+    # )
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     full_time = models.BooleanField(default=True)
     total_learners = models.IntegerField()
@@ -25,9 +29,13 @@ class Instructor(models.Model):
 
 # Learner model
 class Learner(models.Model):
-    user = models.ForeignKey(
+    #user = models.ForeignKey(
+    #    settings.AUTH_USER_MODEL,
+    #    on_delete=models.CASCADE,
+    #)
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     STUDENT = 'student'
     DEVELOPER = 'developer'
@@ -58,9 +66,9 @@ class Course(models.Model):
     image = models.ImageField(upload_to='course_images/')
     description = models.CharField(max_length=1000)
     pub_date = models.DateField(null=True)
+    total_enrollment = models.IntegerField(default=0)
     instructors = models.ManyToManyField(Instructor)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Enrollment')
-    total_enrollment = models.IntegerField(default=0)
     is_enrolled = False
 
     def __str__(self):
@@ -72,8 +80,8 @@ class Course(models.Model):
 class Lesson(models.Model):
     title = models.CharField(max_length=200, default="title")
     order = models.IntegerField(default=0)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.TextField()
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
 
 # Enrollment model
@@ -106,14 +114,19 @@ class Enrollment(models.Model):
     # question text
     # question grade/mark
 
+class Question(models.Model):
+    question_text = models.TextField()
+    grade = models.DecimalField(max_digits=3,decimal_places=1)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+
     # <HINT> A sample model method to calculate if learner get the score of the question
-    #def is_get_score(self, selected_ids):
-    #    all_answers = self.choice_set.filter(is_correct=True).count()
-    #    selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-    #    if all_answers == selected_correct:
-    #        return True
-    #    else:
-    #        return False
+    def is_get_score(self, selected_ids):
+       all_answers = self.choice_set.filter(is_correct=True).count()
+       selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+       if all_answers == selected_correct:
+           return True
+       else:
+           return False
 
 
 #  <HINT> Create a Choice Model with:
@@ -124,11 +137,16 @@ class Enrollment(models.Model):
     # Other fields and methods you would like to design
 # class Choice(models.Model):
 
+class Choice(models.Model):
+    choice_text = models.CharField(max_length=200)
+    is_correct = models.BooleanField(default=False)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    
 # <HINT> The submission model
 # One enrollment could have multiple submission
 # One submission could have multiple choices
 # One choice could belong to multiple submissions
-#class Submission(models.Model):
-#    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-#    choices = models.ManyToManyField(Choice)
+class Submission(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    choices = models.ManyToManyField(Choice)
 #    Other fields and methods you would like to design
