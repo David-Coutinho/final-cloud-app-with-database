@@ -30,7 +30,7 @@ class LessonAdmin(admin.ModelAdmin):
 
 class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
-    list_display = ['lesson','question_text','grade']
+    list_display = ['question_text','lesson','grade']
     list_filter = ['lesson']
 
 # <HINT> Register Question and Choice models here
