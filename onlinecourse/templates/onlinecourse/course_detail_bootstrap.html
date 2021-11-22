@@ -67,9 +67,9 @@
             <div class="container-fluid">
                 <button class="bnt btn-primary btn-block" data-toggle="collapse" data-target="#exam">Start Exam</button>
                 <div id="exam" class="collapse card-columns-vertical">
-                    <form id="questionform" action="point to a submit view" method="post">
+                    <form id="questionform" action="{% url 'onlinecourse:submit' course.id %}" method="post">
                         {% for lesson in course.lesson_set.all %}
-                        {% for question in course.lesson_set.all.question_set.all %}
+                        {% for question in lesson.question_set.all %}
                         <div class="card mt-1">
                             <div class="card-header"><h5>{{ question.question_text}}</h5></div>
                             {% csrf_token %}
