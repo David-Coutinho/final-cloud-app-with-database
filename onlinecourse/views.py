@@ -130,10 +130,10 @@ def submit(request, course_id):
     # Create a new submission object referring to the enrollment
     submission = Submission.objects.create(enrollment=enrollment)
     # Collect the selected choices from the request object
-    choices_ids = extract_answers(request)
-    choices = Choice.objects.filter(id__in=choices_ids)
     # Add each selected choice object to the submission model
-    #submission.choices.add(choices)
+    for choice_id in extract_answers(request):
+        choice = Choice.objects.get(id=choice_id)
+        submission.choices.add(choice)
     submission.save()
     
     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id, submission.id,)))
@@ -154,17 +154,19 @@ def show_exam_result(request, course_id, submission_id):
     submission = Submission.objects.get(id=submission_id)
     # Get the selected choice ids from the submission record
     selected_ids = submission.choices.values_list('id', flat=True)
-    # Calculate the total score by adding up the grades for all questions in the course
-    # Find the questions correspondent to the correct choices
-    questions_ids = submission.choices.filter(is_correct=True).values_list('question', flat=True)
-    # Find correct questions grades
-    questions_grades = Question.objects.filter(id__in=questions_ids).values_list('grade', flat=True)
-    
+    # Calculate the total score by adding up the grades for all questions in the course  
     grade = 0
-    for question_grade in questions_grades:
-        grade += question_grade
+    total_questions_grade = 0
+    for question in Question.objects.all():
+        question_choices = Choice.objects.filter(question=question.id)
+        question_grade = question.grade
+        total_questions_grade += float(question_grade)
+        total_choices = len(question_choices.filter(is_correct=True).values_list('id', flat=True))
+        total_correct_answers = len(submission.choices.filter(question=question.id, is_correct=True).values_list('id', flat=True))
+        grade += float(question_grade * total_correct_answers / total_choices)
+    
+    context = {'course': course, 'selected_ids': selected_ids, 'grade': round(grade,1), 'total_questions_grade': total_questions_grade, 'passing_grade': 0.8 * total_questions_grade}
 
-    context = {'course': course, 'selected_ids': selected_ids, 'grade': grade}
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
 
